@@ -92,7 +92,7 @@ def get_stats(match_data, participant, championName, csv_writer):
 
 def init():
     requests.get(
-        "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/Rusty+WD?api_key=XXX")
+        "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-nameXXX?api_key=XXX")
     champion_file = 'C:/Users/drdem/Desktop/Desktop/Programming/PyLibraries/Leauge shit/champion.json'
     match_list_file = 'C:/Users/drdem/Desktop/Desktop/Programming/PyLibraries/Leauge shit/test.json'
     csv_file = open('C:/Users/drdem/Desktop/Desktop/Programming/PyLibraries/Leauge shit/matchWHOLE.csv', 'a+',
