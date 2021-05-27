@@ -1,6 +1,6 @@
 import requests
 import json
-import csv
+import pandas as pd
 import time
 headerList = ['gameId', 'gameDuration', 'team', 'champion', 'wins', 'kills', 'deaths', 'assists',
               'longestTimeSpentLiving', 'largestKillingSpree', 'largestMultiKill', 'killingSprees', 'doubleKills',
@@ -11,6 +11,7 @@ headerList = ['gameId', 'gameDuration', 'team', 'champion', 'wins', 'kills', 'de
               'physicalDamageTaken', 'trueDamageTaken', 'goldEarned', 'goldSpent', 'totalMinionsKilled', 'turretKills',
               'inhibitorKills']
 
+API = 'INSERT YOUR KEY HERE'
 
 def get_player(cId, match_data):
     for i in range(10):
@@ -26,7 +27,7 @@ def get_match_details(gameId):
     return match_data
 
 
-def get_stats(match_data, participant, championName, csv_writer):
+def get_stats(match_data, participant, championName, df, index):
     gameId = match_data['gameId']
     gameDuration = match_data['gameDuration']
     team = match_data['participants'][participant]['teamId']
@@ -68,33 +69,27 @@ def get_stats(match_data, participant, championName, csv_writer):
     totalMinionsKilled = match_data['participants'][participant]['stats']['totalMinionsKilled']
     turretKills = match_data['participants'][participant]['stats']['turretKills']
     inhibitorKills = match_data['participants'][participant]['stats']['inhibitorKills']
-    csv_writer.writerow(
-        [gameId, gameDuration, team, championName, wins, kills, deaths, assists, longestTimeSpentLiving,
-         largestKillingSpree,
-         largestMultiKill, killingSprees, doubleKills, tripleKills, quadraKills, pentaKills, unrealKills,
-         totalDamageDealt, magicDamageDealt, physicalDamageDealt, trueDamageDealt, largestCriticalStrike,
-         totalDamageDealtToChampions, magicDamageDealtToChampions, physicalDamageDealtToChampions,
-         trueDamageDealtToChampions, totalHeal, damageDealtToTurrets, timeCCingOthers, totalDamageTaken,
-         magicalDamageTaken, physicalDamageTaken, trueDamageTaken, goldEarned, goldSpent, totalMinionsKilled,
-         turretKills, inhibitorKills])
-    print("Game ID: ", match_data['gameId'], "DONE")
-
+    df.loc[index] = [gameId, gameDuration, team, championName, wins, kills, deaths, assists, longestTimeSpentLiving,
+                   largestKillingSpree,
+                   largestMultiKill, killingSprees, doubleKills, tripleKills, quadraKills, pentaKills, unrealKills,
+                   totalDamageDealt, magicDamageDealt, physicalDamageDealt, trueDamageDealt, largestCriticalStrike,
+                   totalDamageDealtToChampions, magicDamageDealtToChampions, physicalDamageDealtToChampions,
+                   trueDamageDealtToChampions, totalHeal, damageDealtToTurrets, timeCCingOthers, totalDamageTaken,
+                   magicalDamageTaken, physicalDamageTaken, trueDamageTaken, goldEarned, goldSpent, totalMinionsKilled,
+                   turretKills, inhibitorKills]
 
 def init():
-    requests.get(
-        "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/Rusty+WD?api_key="+API)
+    requests.get("https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/Rusty+WD?api_key="+API)
 
-    aid = requests.get('https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/Rusty+WD?api_key='+API)
+    aid = requests.get('https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/'+YOUR_NAME_HERE+'?api_key='+API)
     r = aid.json()
     accountId= r['accountId']
 
     mlist = requests.get('https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/'+accountId+'?queue=450&api_key='+API)
     match_list_file = mlist.json()
 
-    csv_file = open('C:/Users/drdem/Desktop/Desktop/Programming/PyLibraries/Leauge shit/matchWHOLE.csv', 'a+',
-                    newline='')
-    csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(headerList)
+    df = pd.DataFrame(columns=headerList)
+
     matches = match_list_file['matches']
     champion_dict = requests.get("https://ddragon.leagueoflegends.com/cdn/11.6.1/data/en_US/champion.json").json()
     id_to_name = {data["key"]: data["name"] for _, data in champion_dict["data"].items()}
@@ -104,8 +99,7 @@ def init():
         participant = int(get_player(i['champion'], match_data))
         champion = str(i['champion'])
         championName = id_to_name[champion]
-        print(championName)
-        get_stats(match_data, participant, championName, csv_writer)
+        get_stats(match_data, participant, championName, df,index)
         print("Index: ", index, " Done")
         if index % 50 is 0:
             time.sleep(30)
