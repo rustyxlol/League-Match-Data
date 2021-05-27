@@ -10,16 +10,6 @@ headerList = ['gameId', 'gameDuration', 'team', 'champion', 'wins', 'kills', 'de
               'totalHeal', 'damageDealtToTurrets', 'timeCCingOthers', 'totalDamageTaken', 'magicalDamageTaken',
               'physicalDamageTaken', 'trueDamageTaken', 'goldEarned', 'goldSpent', 'totalMinionsKilled', 'turretKills',
               'inhibitorKills']
-def create_dict(champions, champion_data):
-    my_dict = {}
-    for i in champions:
-        my_dict[i] = int(champion_data['data'][i]['key'])
-    return my_dict
-
-
-def get_champion_name(ind, champ_dict):
-    inde = int(ind)
-    return list(champ_dict.keys())[list(champ_dict.values()).index(inde)]
 
 
 def get_player(cId, match_data):
@@ -30,7 +20,7 @@ def get_player(cId, match_data):
 
 def get_match_details(gameId):
     mURL = "https://euw1.api.riotgames.com/lol/match/v4/matches/" + str(
-        gameId) + "?api_key=XXX"
+        gameId) + "?api_key="+API
     mResponse = requests.get(mURL)
     match_data = mResponse.json()
     return match_data
@@ -92,26 +82,28 @@ def get_stats(match_data, participant, championName, csv_writer):
 
 def init():
     requests.get(
-        "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-nameXXX?api_key=XXX")
-    champion_file = 'C:/Users/drdem/Desktop/Desktop/Programming/PyLibraries/Leauge shit/champion.json'
-    match_list_file = 'C:/Users/drdem/Desktop/Desktop/Programming/PyLibraries/Leauge shit/test.json'
+        "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/Rusty+WD?api_key="+API)
+
+    aid = requests.get('https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/Rusty+WD?api_key='+API)
+    r = aid.json()
+    accountId= r['accountId']
+
+    mlist = requests.get('https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/'+accountId+'?queue=450&api_key='+API)
+    match_list_file = mlist.json()
+
     csv_file = open('C:/Users/drdem/Desktop/Desktop/Programming/PyLibraries/Leauge shit/matchWHOLE.csv', 'a+',
                     newline='')
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow(headerList)
-    with open(champion_file, 'r', encoding="utf8") as cf:
-        champion_data = json.load(cf)
-    with open(match_list_file, 'r') as mlf:
-        mlf_data = json.load(mlf)
-
-    matches = mlf_data['matches']
-    champions = champion_data['data']
-    champ_dict = create_dict(champions, champion_data)
+    matches = match_list_file['matches']
+    champion_dict = requests.get("https://ddragon.leagueoflegends.com/cdn/11.6.1/data/en_US/champion.json").json()
+    id_to_name = {data["key"]: data["name"] for _, data in champion_dict["data"].items()}
 
     for index, i in enumerate(matches):
         match_data = get_match_details(i['gameId'])
         participant = int(get_player(i['champion'], match_data))
-        championName = get_champion_name(i['champion'], champ_dict)
+        champion = str(i['champion'])
+        championName = id_to_name[champion]
         print(championName)
         get_stats(match_data, participant, championName, csv_writer)
         print("Index: ", index, " Done")
